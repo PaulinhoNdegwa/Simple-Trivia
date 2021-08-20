@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Component } from "react";
 import { escapeHtml, shuffleArray } from "../../utils/utilFunctions";
+import FilterForm from "../FiltersForm";
 import Loader from "../Loader";
 
 class Main extends Component {
@@ -8,8 +9,10 @@ class Main extends Component {
         loading: false,
         data: [],
         numberofQuestions: 10,
+        hideFilters: true,
         categories: [],
         selectedCategory: 0,
+        selectedLevel: "",
         currentIndex: 0,
         userAnswers: [],
         userScore: 0,
@@ -34,20 +37,24 @@ class Main extends Component {
 
     getQuestions = () => {
         this.setState({ loading: true, currentIndex: 0, userScore: 0, userAnswers: [] });
-        const { selectedCategory, numberofQuestions } = this.state;
+        const { selectedCategory, selectedLevel, numberofQuestions } = this.state;
 
         let url = `https://opentdb.com/api.php?amount=${numberofQuestions}&difficulty=easy`;
-        if (selectedCategory) {
-            url = `https://opentdb.com/api.php?amount=${numberofQuestions}&difficulty=easy&category=${selectedCategory}`
+        if (selectedCategory && selectedLevel) {
+            url = `https://opentdb.com/api.php?amount=${numberofQuestions}&difficulty=${selectedLevel}&category=${selectedCategory}`
+        } else if(selectedLevel){
+            url = `https://opentdb.com/api.php?amount=${numberofQuestions}&difficulty=${selectedLevel}`
+        } else if(selectedCategory){
+            url = `https://opentdb.com/api.php?amount=${numberofQuestions}&category=${selectedCategory}`
         }
 
         axios.get(url)
             .then(res => {
-                this.setState({ data: res.data.results, loading: false });
+                this.setState({ data: res.data.results, loading: false, hideFilters: true });
             })
             .catch(err => {
                 console.log(err.request);
-                this.setState({ loading: false });
+                this.setState({ loading: false, hideFilters: true });
             })
     }
 
@@ -57,6 +64,10 @@ class Main extends Component {
         setTimeout(() => {
             this.getQuestions();
         }, 1000);
+    }
+
+    handleLevelChange = e => {
+        this.setState({ selectedLevel: e.target.value });
     }
 
     handleAnswerRadio = (e) => {
@@ -85,14 +96,6 @@ class Main extends Component {
         const { categories } = this.state;
         return categories.filter(cat => cat.id === id)[0].name;
 
-    }
-
-    mapCategories = categories => {
-        return categories.map((category, index) => {
-            return (
-                <option key={index} value={category.id}>{category.name}</option>
-            )
-        })
     }
 
     renderQuestionCard = question => {
@@ -133,33 +136,39 @@ class Main extends Component {
 
 
     render() {
-        const { loading, data, currentIndex, userScore, userAnswers, selectedCategory, categories } = this.state;
+        const { loading, data, currentIndex, userScore, userAnswers, selectedCategory, selectedLevel, categories, hideFilters } = this.state;
         const question = data[currentIndex];
         return (
-            <div className="flex flex-col mb-3 sm:justify-center w-auto sm:w-auto md:w-2/3 lg:w-1/2  mx-auto px-4">
-                <div className="flex flex-col sm:flex-row my-1 mx-1">
-                    <div>
-                        <label className="block text-base text-md text-gray-800 py-1" htmlFor="cat">Select Category:</label>
-                        <select name="cat" id="cat" value={selectedCategory} onChange={this.handleCategoryChange} className="w-full md:w-60 h-9 py-1 bg-white border-1 border-gray-500 text-base rounded-lg focus:border-lg focus:border-indigo-500">
-                            <option value={0}>Random</option>
-                            {this.mapCategories(categories)}
-                        </select>
-                    </div>
-                    <button className="bg-indigo-500 mt-1 md:h-9 md:mt-7 md:ml-4 py-1 px-3 rounded-md w-full sm:w-24 text-white font-semibold" onClick={() => this.getQuestions()}>Refresh</button>
-                    <hr className="my-2" />
+            <div className="flex flex-col mb-3 sm:justify-center w-auto sm:w-auto md:w-2/3 lg:w-1/2 mx-auto">
+                <div className="flex flex-row-reverse">
+                <button className={`mr-6 sm:ml-40 my-1 py-1 px-2 font-semibold border-2 border-indigo-500 rounded-md text-sm text-center w-28 h-8  ${hideFilters ? ` text-white bg-indigo-500` : `bg-white text-black `} `}
+                    onClick={() => this.setState({ hideFilters: !hideFilters })}>
+                    {hideFilters ? "Show Filters" : "Hide Filters"}
+                </button>
                 </div>
+                <FilterForm 
+                handleCategoryChange={this.handleCategoryChange}
+                selectedCategory={selectedCategory}
+                categories={categories}
+                getQuestions={this.getQuestions}
+                handleLevelChange={this.handleLevelChange}
+                selectedLevel={selectedLevel}
+                hideFilters={hideFilters}
+
+                />
+                <hr className="my-2" />
                 {
                     loading ? (
                         <Loader />
                     ) : (currentIndex < data.length ? (
                         question ? (
-                            <div>
-                                <p className="text-2xl font-bold text-indigo-600 ml-2">{selectedCategory !== 0 ? this.filterCategoryById(selectedCategory) : "Random"}</p>
+                            <div className="px-5 mt-4">
+                                <p className="text-2xl font-bold text-indigo-600 text-center">{selectedCategory !== 0 ? this.filterCategoryById(selectedCategory) : "Random"}</p>
                                 {this.renderQuestionCard(question)}
                             </div>
                         ) : null
                     ) : (
-                        <div className="w-full flex-auto my-3 py-6 px-5 mx-auto border-2 border-gray-400">
+                        <div className="w-auto flex-auto my-3 mx-1 py-6 px-5 md:mx-auto border-2 border-gray-400">
                             <p className="font-bold text-xl">Final Score: {userScore} out of {data.length}</p>
                             <hr />
                             <div>{this.mapResults(userAnswers)}</div>
