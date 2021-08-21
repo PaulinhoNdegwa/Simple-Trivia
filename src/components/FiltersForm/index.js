@@ -24,7 +24,7 @@ const FilterForm = props => {
         <form autoComplete="off" className={`${hideFilters ? `hidden` : ``} flex flex-col px-4 mb-2 sm:flex-row sm:flex-wrap sm:justify-evenly`}>
                 <div className="flex-1 my-1 mx-1">
                         <label className="block text-sm text-gray-800 py-1" htmlFor="cat">Select Difficulty:</label>
-                        <select name="cat" id="cat" value={selectedLevel} onChange={handleLevelChange} className="w-full md:w-65 h-8 py-1 bg-white border-1 border-gray-500 text-base rounded-lg focus:border-lg focus:border-indigo-500">
+                        <select name="difficulty" id="difficulty" value={selectedLevel} onChange={handleLevelChange} className="w-full md:w-65 h-8 py-1 bg-white border-1 border-gray-500 text-base rounded-lg focus:border-lg focus:border-indigo-500">
                             <option value={""}>All</option>
                             {mapLevels(levels)}
                         </select>

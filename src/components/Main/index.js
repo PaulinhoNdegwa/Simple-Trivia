@@ -3,6 +3,7 @@ import { Component } from "react";
 import { escapeHtml, shuffleArray } from "../../utils/utilFunctions";
 import FilterForm from "../FiltersForm";
 import Loader from "../Loader";
+import Scoreboard from "../ScoreBoard";
 
 class Main extends Component {
     state = {
@@ -16,12 +17,22 @@ class Main extends Component {
         currentIndex: 0,
         userAnswers: [],
         userScore: 0,
-        answerChecked: false
+        answerChecked: false,
+        scoreBoard: []
     }
 
     componentDidMount() {
         this.getCategories()
         this.getQuestions();
+        let scoreBoard = JSON.parse(localStorage.getItem("scoreboard"));
+        if(!scoreBoard){
+            localStorage.setItem("scoreboard", JSON.stringify([]));
+            scoreBoard = [];
+
+        }
+        console.log(scoreBoard)
+        this.setState({ scoreBoard });
+
     }
 
 
@@ -77,7 +88,22 @@ class Main extends Component {
         if (data[currentIndex].correct_answer == e.target.value) {
             this.setState({ userScore: userScore + 1 });
         }
-        this.setState({ currentIndex: currentIndex + 1, userAnswers: [...userAnswers, e.target.value], answerChecked: false })
+        this.setState({ currentIndex: currentIndex + 1, userAnswers: [...userAnswers, e.target.value], answerChecked: false });
+
+        const { selectedLevel, selectedCategory, scoreBoard } = this.state;
+        if(currentIndex - data.length === -1){
+            console.log("Last answer");
+            const score = {
+                score: data[currentIndex].correct_answer == e.target.value ? userScore + 1 : userScore,
+                category: selectedCategory ? this.filterCategoryById(selectedCategory) : "Random",
+                level: selectedLevel ? selectedLevel : "Random",
+                out_of: data.length
+            }
+            let localscoreBoard = JSON.parse(localStorage.getItem("scoreboard"));
+            localscoreBoard.push(score);
+            this.setState({ scoreBoard: [ ...localscoreBoard ]});
+            localStorage.setItem("scoreboard", JSON.stringify(localscoreBoard));
+        }
     }
 
     mapAnswers = answers => {
@@ -136,7 +162,7 @@ class Main extends Component {
 
 
     render() {
-        const { loading, data, currentIndex, userScore, userAnswers, selectedCategory, selectedLevel, categories, hideFilters } = this.state;
+        const { loading, data, currentIndex, userScore, userAnswers, selectedCategory, selectedLevel, categories, hideFilters, scoreBoard } = this.state;
         const question = data[currentIndex];
         return (
             <div className="flex flex-col mb-3 sm:justify-center w-auto sm:w-auto md:w-2/3 lg:w-1/2 mx-auto">
@@ -168,7 +194,7 @@ class Main extends Component {
                             </div>
                         ) : null
                     ) : (
-                        <div className="w-auto flex-auto my-3 mx-1 py-6 px-5 md:mx-auto border-2 border-gray-400">
+                        <div className="w-auto flex-auto my-3 mx-1.5 py-6 px-5 md:mx-auto border-2 border-gray-400">
                             <p className="font-bold text-xl">Final Score: {userScore} out of {data.length}</p>
                             <hr />
                             <div>{this.mapResults(userAnswers)}</div>
@@ -177,6 +203,7 @@ class Main extends Component {
                     )
                     )
                 }
+                <Scoreboard scoreBoard={scoreBoard} />
             </div>
         );
     }
