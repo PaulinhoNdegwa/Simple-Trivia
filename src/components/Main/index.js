@@ -35,6 +35,11 @@ class Main extends Component {
 
     }
 
+    clearScoreBoard = () => {
+        localStorage.setItem('scoreboard', JSON.stringify([]));
+        this.setState({ scoreBoard: [] });
+    }
+
 
     getCategories = () => {
         axios.get("https://opentdb.com/api_category.php")
@@ -90,7 +95,7 @@ class Main extends Component {
         }
         this.setState({ currentIndex: currentIndex + 1, userAnswers: [...userAnswers, e.target.value], answerChecked: false });
 
-        const { selectedLevel, selectedCategory, scoreBoard } = this.state;
+        const { selectedLevel, selectedCategory } = this.state;
         if(currentIndex - data.length === -1){
             console.log("Last answer");
             const score = {
@@ -100,7 +105,7 @@ class Main extends Component {
                 out_of: data.length
             }
             let localscoreBoard = JSON.parse(localStorage.getItem("scoreboard"));
-            localscoreBoard.push(score);
+            localscoreBoard.unshift(score);
             this.setState({ scoreBoard: [ ...localscoreBoard ]});
             localStorage.setItem("scoreboard", JSON.stringify(localscoreBoard));
         }
@@ -203,7 +208,7 @@ class Main extends Component {
                     )
                     )
                 }
-                <Scoreboard scoreBoard={scoreBoard} />
+                <Scoreboard scoreBoard={scoreBoard} clearScoreBoard={this.clearScoreBoard} />
             </div>
         );
     }
