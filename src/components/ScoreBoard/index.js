@@ -14,7 +14,7 @@ const Scoreboard = props => {
         })
     }
     return (
-        <div className="w-auto px-2 text-center px-5">
+        <div className="w-auto px-2 text-center md:px-4">
             <h3 className="font-bold underline mb-2">Your Scoreboard</h3>
             <table className="w-full table-fixed border-collapse border border-green-800">
                 <thead>
@@ -30,7 +30,7 @@ const Scoreboard = props => {
             </table>
             {
                 scoreBoard.length > 0 ? (
-                    <button onClick={() => clearScoreBoard()} className="mt-2 py-1 px-2 text-sm font-bold bg-gradient-to-tr from-red-300 to-red-800 rounded-md text-white">Clear board</button>
+                    <button onClick={() => clearScoreBoard()} className="mt-2 py-1 px-2 text-sm font-semibold bg-gradient-to-tr from-red-400 to-red-800 rounded-md text-white">Clear board</button>
                 ) : (
                     <p className="leading-loose my-2">No scores yet. Start playing...☝🏽</p>
                 )

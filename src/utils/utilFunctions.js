@@ -14,7 +14,9 @@ const escapeHtml = (text) => {
         .replace(/&quot;/g, '"')
         .replace(/&#039;/g, "'")
         .replace(/&eacute;/g, 'É')
-        .replace(/&ldquo;/g, '"');
+        .replace(/&ldquo;/g, '"')
+        .replace(/&rsquo;/g, "'");
 }
+
 
 export { shuffleArray, escapeHtml }

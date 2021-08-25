@@ -1,10 +1,12 @@
 import axios from "axios";
 import { Component } from "react";
-import { escapeHtml, shuffleArray } from "../../utils/utilFunctions";
+import { shuffleArray } from "../../utils/utilFunctions";
+import Answers from "../Answers";
 import FilterForm from "../FiltersForm";
+import Landing from "../Landing";
 import Loader from "../Loader";
+import QuestionCard from "../QuestionCard";
 import Scoreboard from "../ScoreBoard";
-
 class Main extends Component {
     state = {
         loading: false,
@@ -12,7 +14,7 @@ class Main extends Component {
         numberofQuestions: 10,
         hideFilters: true,
         categories: [],
-        selectedCategory: 0,
+        selectedCategory: "",
         selectedLevel: "",
         currentIndex: 0,
         userAnswers: [],
@@ -23,14 +25,13 @@ class Main extends Component {
 
     componentDidMount() {
         this.getCategories()
-        this.getQuestions();
+        // this.getQuestions();
         let scoreBoard = JSON.parse(localStorage.getItem("scoreboard"));
         if(!scoreBoard){
             localStorage.setItem("scoreboard", JSON.stringify([]));
             scoreBoard = [];
 
         }
-        console.log(scoreBoard)
         this.setState({ scoreBoard });
 
     }
@@ -49,6 +50,11 @@ class Main extends Component {
             .catch(err => {
                 console.log(err.request);
             })
+    }
+
+    nextQuestion = () => {
+        const { currentIndex } = this.state;
+        this.setState({ currentIndex: currentIndex + 1, answerChecked: false });
     }
 
     getQuestions = () => {
@@ -93,11 +99,10 @@ class Main extends Component {
         if (data[currentIndex].correct_answer == e.target.value) {
             this.setState({ userScore: userScore + 1 });
         }
-        this.setState({ currentIndex: currentIndex + 1, userAnswers: [...userAnswers, e.target.value], answerChecked: false });
+        this.setState({  userAnswers: [...userAnswers, e.target.value], currentIndex: currentIndex+1, answerChecked: false });
 
         const { selectedLevel, selectedCategory } = this.state;
         if(currentIndex - data.length === -1){
-            console.log("Last answer");
             const score = {
                 score: data[currentIndex].correct_answer == e.target.value ? userScore + 1 : userScore,
                 category: selectedCategory ? this.filterCategoryById(selectedCategory) : "Random",
@@ -111,64 +116,21 @@ class Main extends Component {
         }
     }
 
-    mapAnswers = answers => {
-        const { answerChecked } = this.state;
-        return answers.map((answer, index) => {
-            return (
-                <div key={index} className="mx-2 mt-2">
-                    <input type="radio" checked={answerChecked} onChange={(e) => this.handleAnswerRadio(e)} id={answer} name="answer" value={answer} className="h-5 w-5 rounded-lg hover:h-6 hover:w-6 hover:border-blue-500 hover:border-indigo-500 focus:outline-none hover:ring-1 hover:ring-indigo-600" />
-                    <label className="ml-2 text-lg font-medium " htmlFor="answer">{escapeHtml(answer)}</label>
-                </div>
-            )
-        })
-    }
-
     filterCategoryById = id => {
         const { categories } = this.state;
         return categories.filter(cat => cat.id === id)[0].name;
 
     }
 
-    renderQuestionCard = question => {
-        const { currentIndex, data } = this.state;
-        const allAnswers = [...question.incorrect_answers, question.correct_answer];
-        shuffleArray(allAnswers);
-        return (
-            <div className="w-auto flex-auto my-3 py-6 px-5 mx-auto border-2 border-gray-400">
-                <div className="flex mb-2 justify-center">
-                    <p className="text-2xl text-blue-600 font-bold">{currentIndex + 1} / {data.length}</p>
-                    <hr />
-                </div>
-                <p className="font-bold text-lg font-mono mt--1">{escapeHtml(question.question)}</p>
-                <div className="mt-3">{this.mapAnswers(allAnswers)}</div>
-            </div>
-        )
-    }
-
-
-    mapResults = (userAnswers) => {
-        const { data } = this.state;
-        return userAnswers.map((ans, index) => {
-            return <div key={index}
-                className={`${ans == data[index].correct_answer ? "border-green-400" : "text-black"} py-3 px-1`}
-            >
-
-                <p className="font-bold leading-loose text-base mb-2">{escapeHtml(data[index].question)}</p>
-                <p className={`${ans == data[index].correct_answer ? "text-green-500" : "text-red-500"} font-medium ml-1`}>Your answer: {escapeHtml(ans)}</p>
-                {ans == data[index].correct_answer ?
-                    " " : (
-                        <p className="text-base font-medium ml-1">Correct answer: {escapeHtml(data[index].correct_answer)}</p>
-                    )}
-
-                <hr className="my-2" />
-            </div>
-        })
-    }
-
-
     render() {
-        const { loading, data, currentIndex, userScore, userAnswers, selectedCategory, selectedLevel, categories, hideFilters, scoreBoard } = this.state;
+        const { loading, data, currentIndex, userScore, userAnswers, answerChecked, selectedCategory, selectedLevel, categories, hideFilters, scoreBoard } = this.state;
         const question = data[currentIndex];
+
+        if(question){
+            const allAnswers = [...question.incorrect_answers, question.correct_answer];
+            shuffleArray(allAnswers);
+            question.all_answers = allAnswers;
+        }
         return (
             <div className="flex flex-col mb-3 sm:justify-center w-auto sm:w-auto md:w-2/3 lg:w-1/2 mx-auto">
                 <div className="flex flex-row-reverse">
@@ -189,23 +151,20 @@ class Main extends Component {
                 />
                 <hr className="my-2" />
                 {
+                    
                     loading ? (
                         <Loader />
-                    ) : (currentIndex < data.length ? (
+                    ) : ( data.length == 0  ||  selectedCategory === "")? (
+                        <Landing />
+                    ) : (
+                        
+                     (currentIndex < data.length ? (
                         question ? (
-                            <div className="px-5 mt-4">
-                                <p className="text-2xl font-bold text-indigo-600 text-center">{selectedCategory !== 0 ? this.filterCategoryById(selectedCategory) : "Random"}</p>
-                                {this.renderQuestionCard(question)}
-                            </div>
+                           <QuestionCard question={question} currentIndex={currentIndex} data={data} answerChecked={answerChecked} handleAnswerRadio={this.handleAnswerRadio} selectedCategory={selectedCategory} filterCategoryById={this.filterCategoryById} />
                         ) : null
                     ) : (
-                        <div className="w-auto flex-auto my-3 mx-1.5 py-6 px-5 md:mx-auto border-2 border-gray-400">
-                            <p className="font-bold text-xl">Final Score: {userScore} out of {data.length}</p>
-                            <hr />
-                            <div>{this.mapResults(userAnswers)}</div>
-                            <button className="bg-indigo-500 py-2 px-3 rounded-md w-24 text-white" onClick={() => this.getQuestions()}>Restart</button>
-                        </div>
-                    )
+                        <Answers userAnswers={userAnswers} userScore={userScore} data={data} getQuestions={this.getQuestions} />
+                    ) )
                     )
                 }
                 <Scoreboard scoreBoard={scoreBoard} clearScoreBoard={this.clearScoreBoard} />

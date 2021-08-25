@@ -36,7 +36,7 @@ const FilterForm = props => {
                             {mapCategories(categories)}
                         </select>
                 </div>
-                <button className="bg-indigo-500 mt-1 sm:h-9 sm:mt-7 sm:ml-4 py-1 px-3 rounded-md w-full sm:w-24 text-white font-semibold" onClick={() => getQuestions()}>Refresh</button>
+                {/* <button className="bg-indigo-500 mt-1 sm:h-9 sm:mt-7 sm:ml-4 py-1 px-3 rounded-md w-full sm:w-24 text-white font-semibold" onClick={(e) => {getQuestions(); e.preventDefault() }}>Start</button> */}
                 <hr className="my-2" />
         </form>
      );
